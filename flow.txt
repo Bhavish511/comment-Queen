@@ -1,0 +1,18 @@
+project/
+├── server.js
+├── config/
+│   └── passport.js
+├── services/
+│   └── graphApi.js
+├── routes/
+│   ├── authRoutes.js
+│   ├── facebookRoutes.js
+│   └── instagramRoutes.js
+├── controllers/
+│   ├── facebookController.js
+│   └── instagramController.js
+└── utils/
+    └── sharedstate.js
+── ssl/
+    ├── localhost-key.pem
+    └── localhost.pem
