@@ -12,8 +12,21 @@ let media_ids = [];
 let media_comment_ids = [];
 
 const requireAuth = (req, res, next) => {
-  const usertoken = req.session.tokens?.accessToken;
-  if (!usertoken) return res.redirect("/auth/facebook");
+  const tokens = req.session.tokens;
+
+  if (!tokens || !tokens.accessToken) {
+    console.log("No access token found in session");
+    return res.redirect("/auth/facebook");
+  }
+
+  const now = Date.now();
+  const bufferTime = 10 * 60 * 1000; // 10 minutes early buffer
+
+  if (tokens.expiresAt && now > tokens.expiresAt - bufferTime) {
+    console.log("Access token expired or about to expire");
+    return res.redirect("/auth/facebook");
+  }
+
   next();
 };
 
