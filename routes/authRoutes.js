@@ -25,6 +25,8 @@ router.get("/facebook/callbacks", passport.authenticate("facebook", { session: t
   if (!req.user?.accessToken) {
     return res.status(401).json({ error: "Authentication failed or token missing" });
   }
+  console.log("User authenticated:", req.user);
+  console.log("Session before save:", req.session);
 
   // This is already the long-lived token
   req.session.tokens = {

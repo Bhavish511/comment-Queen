@@ -1,9 +1,5 @@
 const { callGraphAPI,extendUserAccessToken } = require('../services/graphApi');
-const sharedState = require('../utils/sharedstate');
 // const { getPageToken, getPageId } = require('../utils/sharedstate');
-
-let page_token= null;
-let page_id = null;
 let post_ids = [];
 // const requireAuth = (req, res, next) => {
 //   const usertoken = req.session.tokens?.accessToken;
@@ -54,7 +50,6 @@ const getFacebookPages = async (req, res) => {
   try {
     const data = await callGraphAPI("me/accounts", "GET", { access_token:user_token });
     if(data) {
-      res.status(200).json(data);
       page_token = data.data[0].access_token;
       page_id = data.data[0].id;
       sharedState.setPageToken(page_token);
@@ -62,14 +57,32 @@ const getFacebookPages = async (req, res) => {
       console.log("Token Stored");
       const page_token1 = sharedState.getPageToken();
       const page_id1 = sharedState.getPageId();
-
+      
       console.log("Page Token:", page_token1);
       console.log("Page ID:", page_id1);
+      req.session.page = {
+        accessToken: page_token,
+        id: page_id
+      };
+      
+      console.log("Session about to save:", req.session);
+      req.session.save(err => {
+        if (err) {
+          console.error("Failed to save page data to file-based session:", err);
+        } else {
+          
+          console.log("Page token & ID saved to session:", req.session.page);
+          // res.status(200).json({ message: "Page token saved", page: req.session.page });
+          // console.log("Page token & ID saved to file-based session.");
+        }
+        res.status(200).json(data);
+      });
+      
       // setPageCredentials(page_token,page_id);
       // const iddddd = getPageId();
       // console.log(getPageId());
       // console.log(getPageToken());
-
+      
     } else {
       res.status(500).json({ error: "Failed to fetch pages." });
     }
@@ -81,6 +94,8 @@ const getFacebookPages = async (req, res) => {
 
 let post_ids_title = [];
 const getpagefeed = async (req, res)=>{
+  const page_token = req.session.page.accessToken;
+  const page_id = req.session.page.id;
   console.log(page_token);
   console.log(page_id);
   // console.log("Full session:", req.session);
@@ -90,13 +105,14 @@ const getpagefeed = async (req, res)=>{
     res.status(200).json(data);
     post_ids_title = (data.data || []).map(post => ({id: post.id,message: post.message}));
     console.log(post_ids_title);
-    // console.log(data);
+    console.log(req.session?.page?.accessToken);
   } catch (err) {
     console.error("Graph API Error:", err.response?.data || err.message);
     res.status(500).json({ error: "Failed to fetch page Feed." });  }
 };
 let comment_ids_msg = [];
 const getpostcomments = async (req, res) => {
+  const page_token = req.session.page.accessToken;
   console.log(post_ids_title);
   if(!post_ids_title) return res.status(401).json({ error: "post not found" });
   try {
@@ -106,6 +122,7 @@ const getpostcomments = async (req, res) => {
     res.status(200).json(comments);
     comment_ids_msg = (comments.data || []).map(comment => ({id: comment.id,message: comment.message}));
     console.log(comment_ids_msg);
+    console.log("Full session: ", req.session);
     // console.log(comments);  
   } catch (err) {
     console.error("Graph API Error:", err.response?.data || err.message);
@@ -113,6 +130,7 @@ const getpostcomments = async (req, res) => {
 };
 
 const post_comment = async (req, res) => {
+  const page_token = req.session.page.accessToken;
   if(!post_ids_title) return res.status(401).json({ error: "post not found" });
 
   try {
@@ -129,7 +147,7 @@ const post_comment = async (req, res) => {
 
 const post_comment_reply = async (req, res) => {
   console.log('sdnvjnvs');
-  
+  const page_token = req.session.page.accessToken;
   if(!comment_ids_msg) return res.status(401).json({ error: "comment not found" });
   try {
     const comment_ids = comment_ids_msg.map(comment => comment.id);
@@ -144,7 +162,7 @@ const post_comment_reply = async (req, res) => {
 };
 
 const post_comment_replies = async (req, res) => {
-  
+  const page_token = req.session.page.accessToken;
   if(!comment_ids_msg) return res.status(401).json({ error: "comment not found" });
   try {
     const comment_ids = comment_ids_msg.map(comment => comment.id);
@@ -168,6 +186,4 @@ module.exports = {
   post_comment,
   post_comment_reply,
   post_comment_replies,
-  // getPageToken,
-  // getPageId
 };

@@ -1,5 +1,4 @@
 const { callGraphAPI } = require('../services/graphApi');
-const sharedstate = require('../utils/sharedstate');
 // const {getPageToken,getPageId} = require('../utils/sharedstate');
 
 // const page_token = getPageToken();
@@ -31,9 +30,8 @@ const requireAuth = (req, res, next) => {
 };
 
 const getIGAccount = async (req, res) => {
-  const page_id = sharedstate.getPageId();
-  // console.log();
-  const page_token = sharedstate.getPageToken();
+const page_token = req.session.page.accessToken;
+  const page_id = req.session.page.id;  // console.log();
   console.log("pageid: ", page_id);
   console.log("pagetoken: ", page_token);
   
@@ -57,7 +55,7 @@ const getIGAccount = async (req, res) => {
 };
 
 const getIGFeed = async (req, res) => {
-  const page_token = sharedstate.getPageToken();
+  const page_token = req.session.page.accessToken;
   if (!ig_id) return res.status(401).json({ error: "IG account ID not exists" });
   try {
     const response = await callGraphAPI(`${ig_id}/media`,"GET",{access_token:page_token});
@@ -72,7 +70,7 @@ const getIGFeed = async (req, res) => {
 };
 
 const postIGComment = async (req, res) => {
-  const page_token = sharedstate.getPageToken();
+  const page_token = req.session.page.accessToken;
   if (!media_ids || media_ids.length === 0) return res.status(400).json({ error: "No media available to perform this operation" });
   try {
     const response = await callGraphAPI(`${media_ids[0]}/comments`,'POST',{message:"Commenting itself on the media...!",access_token:page_token});
@@ -84,7 +82,7 @@ const postIGComment = async (req, res) => {
 };
 
 const getIGComments = async (req, res) => {
-  const page_token = sharedstate.getPageToken();
+  const page_token = req.session.page.accessToken;
   if (!media_ids) return res.status(401).json({ error: "No any media found" });
   try {
     const response = await callGraphAPI(`${media_ids[0]}/comments`,'GET',{access_token:page_token});
@@ -99,7 +97,7 @@ const getIGComments = async (req, res) => {
 };
 
 const getIGCommentReplies = async (req, res) => {
-  const page_token = sharedstate.getPageToken();
+  const page_token = req.session.page.accessToken;
   if(!media_ids || !media_comment_ids) return res.status(401).json({error: "media or Comments ID's not found..!"});
   try {
     const response = await callGraphAPI(`${media_comment_ids[2]}/replies`,'GET',{access_token:page_token});
@@ -114,7 +112,6 @@ module.exports = {
   requireAuth,
   getIGAccount,
   getIGFeed,
-  // getFacebookPages,
   postIGComment,
   getIGComments,
   getIGCommentReplies

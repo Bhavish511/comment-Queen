@@ -6,13 +6,28 @@ require('dotenv').config();
 const session = require('express-session');
 const passport = require('passport');
 require('./config/passport')(passport);
+const app = express();
+const PORT = process.env.PORT || 5050;
+
+const FileStore = require('session-file-store')(session);
+
+app.use(session({
+  store: new FileStore({ path: './sessions' }),
+  secret: 'your-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: true,
+    httpOnly: true,
+    maxAge: 60 * 60 * 1000
+  }
+}));
+
 
 const authRoutes = require('./routes/authRoutes');
 const facebookRoutes = require('./routes/facebookRoutes');
 const instagramRoutes = require('./routes/instagramRoutes');
 
-const app = express();
-const PORT = process.env.PORT || 5050;
 
 app.use(express.json());
 app.set("trust proxy", 1);
